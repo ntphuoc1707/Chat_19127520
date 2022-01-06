@@ -24,15 +24,15 @@ class Infor{
 }
 class SThread extends Thread{
     private Socket socket;
-    private static Infor[] infors;
-    public SThread(Socket s, Infor[] infors){
+    private static Vector<Infor> infors;
+    public SThread(Socket s, Vector<Infor> infors){
         socket=s;
         this.infors=infors;
     }
-    public static boolean CheckAccount(String a, String p){
-        for (int i = 0; i < infors.length; i++) {
-            if(infors[i].getUser().equals(a)){
-                if(infors[i].getPass().equals(p)){
+    public static boolean CheckAccount4Login(String a, String p){
+        for (int i = 0; i < infors.size(); i++) {
+            if(infors.elementAt(i).getUser().equals(a)){
+                if(infors.elementAt(i).getPass().equals(p)){
                     return true;
                 }
                 return false;
@@ -40,7 +40,15 @@ class SThread extends Thread{
         }
         return false;
     }
-
+    public static boolean CheckAccount4SignUp(String a, String p){
+        for (int i = 0; i < infors.size(); i++) {
+            if(infors.elementAt(i).getUser().equals(a)){
+                return false;
+            }
+        }
+        infors.add(new Infor(a,p));
+        return true;
+    }
     public void run(){
         try {
             do {
@@ -50,14 +58,28 @@ class SThread extends Thread{
                 String[] t = recv.split("\t");
                 OutputStream os = socket.getOutputStream();
                 BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
-                if (CheckAccount(t[0], t[1])) {
-                    bw.write("OKL");
-                    bw.newLine();
-                    bw.flush();
-                } else {
-                    bw.write("NOL");
-                    bw.newLine();
-                    bw.flush();
+                if(t[0].equals("Login")) {
+                    if (CheckAccount4Login(t[0], t[1])) {
+                        bw.write("OKL");
+                        bw.newLine();
+                        bw.flush();
+                    } else {
+                        bw.write("NOL");
+                        bw.newLine();
+                        bw.flush();
+                    }
+                }
+                else if(t[0].equals("SignUp")){
+                    if(!CheckAccount4SignUp(t[0],t[1])){
+                        bw.write("OKS");
+                        bw.newLine();
+                        bw.flush();
+                    }
+                    else{
+                        bw.write("NOS");
+                        bw.newLine();
+                        bw.flush();
+                    }
                 }
             }
             while (true);
@@ -70,7 +92,7 @@ class SThread extends Thread{
 public class Server {
     public static Vector<SThread> sThreads=new Vector<>();
     public static Vector<String> user=new Vector<>();
-    public static Infor[] infors;
+    public static Vector<Infor> infors=new Vector<>();
     public static void LoadData(){
         String infor="";
         try{
@@ -82,10 +104,9 @@ public class Server {
                 infor+=(char)c;
             }
             String[] t=infor.split("\n");
-            infors=new Infor[t.length];
             for(int i=0;i<t.length;i++){
                 String[] q=t[i].split(" . . . ");
-                infors[i]=new Infor(q[0],q[1]);
+                infors.add(new Infor(q[0],q[1]));
             }
         }
         catch (Exception exception){
