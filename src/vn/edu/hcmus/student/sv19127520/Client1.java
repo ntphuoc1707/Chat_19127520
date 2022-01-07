@@ -17,11 +17,13 @@ import java.util.Vector;
  * Description: ...
  */
 class CThread1 extends Thread{
-    //public Vector<JFrame> frames=new Vector<>();
+    public static Vector<JFrame> frames=new Vector<>();
     public Socket socket;
-    public JPanel panel=new JPanel();
-    public JFrame frame=new JFrame();
-    CThread1(JFrame frame,JPanel panel, Socket socket){
+    public JPanel panel;
+    public JFrame frame;
+    public String user;
+    CThread1(JFrame frame,JPanel panel, Socket socket, String user){
+        this.user=user;
         this.frame=frame;
         this.panel=panel;
         this.socket=socket;
@@ -37,10 +39,52 @@ class CThread1 extends Thread{
                 if(t[0].equals("List")){
                     panel.removeAll();
                     panel.repaint();
+                    JPanel pn=new JPanel();
+                    pn.setLayout(new BoxLayout(pn,BoxLayout.Y_AXIS));
+                    JLabel l=new JLabel("User online: ");
+                    l.setAlignmentX(Component.CENTER_ALIGNMENT);
+                    pn.add(l);
                     for (int i=1;i<t.length;i++) {
-                        JLabel label = new JLabel(t[i]);
-                        panel.add(label);
+                        if(!t[i].equals(user)) {
+                            JPanel p=new JPanel();
+                            p.setLayout(new FlowLayout());
+                            JLabel label = new JLabel(t[i]);
+                            label.setFont(new Font("Verdana",Font.ITALIC,15));
+                            JButton button=new JButton("Chat");
+                            int finalI = i;
+                            button.addActionListener(new ActionListener() {
+                                @Override
+                                public void actionPerformed(ActionEvent e) {
+                                    JFrame f=new JFrame(t[finalI]);
+                                    for (JFrame x: frames) {
+                                        if(x.getTitle().equals(t[finalI]))
+                                            return;
+                                    }
+                                    f.addWindowListener(new WindowAdapter() {
+                                        @Override
+                                        public void windowClosing(WindowEvent e) {
+                                            for(JFrame x: frames){
+                                                if(x.getTitle().equals(t[finalI])) {
+                                                    frames.remove(x);
+                                                    return;
+                                                }
+                                            }
+                                        }
+                                    });
+                                    frames.add(f);
+                                    f.pack();
+                                    f.setVisible(true);
+                                }
+                            });
+                            label.setAlignmentX(Component.CENTER_ALIGNMENT);
+                            p.add(label);
+                            p.add(button);
+                            pn.add(p);
+                        }
                     }
+                    JScrollPane pane=new JScrollPane(pn);
+                    pane.setMaximumSize(new Dimension(700,700));
+                    panel.add(pane);
                 }
                 frame.pack();
             } while (true);
@@ -53,6 +97,7 @@ class CThread1 extends Thread{
 public class Client1 {
     public static JFrame f=new JFrame();
     public static Socket socket;
+    public static String user_name;
     public static Vector<JFrame> frames=new Vector<>();
     public static void createReg(){
         f.dispose();
@@ -156,13 +201,14 @@ public class Client1 {
     public static void createMainUI(){
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         f.setLayout(new FlowLayout());
+        f.setMinimumSize(new Dimension(200,200));
         f.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
                 try{
                     OutputStream os = socket.getOutputStream();
                     BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
-                    bw.write("EXIT. . . EXIt...");
+                    bw.write("EXiT. . . EXIt...");
                     bw.newLine();
                     bw.flush();
                 }catch (Exception exception){
@@ -215,7 +261,7 @@ public class Client1 {
         });
         //f.add(textField);
         f.add(panel);
-        CThread1 cThread1=new CThread1(f,panel,socket);
+        CThread1 cThread1=new CThread1(f,panel,socket,user_name);
         cThread1.start();
         //f.add(button);
         f.pack();
@@ -283,6 +329,7 @@ public class Client1 {
                             if(recv.equals("OKL")){
                                 f.dispose();
                                 f=new JFrame(_user.getText());
+                                user_name=_user.getText();
                                 createMainUI();
                             }
                             else{

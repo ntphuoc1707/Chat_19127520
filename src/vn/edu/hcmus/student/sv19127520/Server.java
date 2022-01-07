@@ -102,7 +102,7 @@ class SThread extends Thread{
                         bw.flush();
                     }
                 }
-                else if(recv.equals("EXIT. . . EXIt...")){
+                else if(recv.equals("EXiT. . . EXIt...")){
                     return;
                 }
             } while (true);
