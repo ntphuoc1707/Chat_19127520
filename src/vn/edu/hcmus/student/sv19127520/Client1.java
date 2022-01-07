@@ -4,6 +4,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.Socket;
 
@@ -83,30 +85,31 @@ public class Client1 {
                     if(!p.equals(pc)){
                         JOptionPane.showMessageDialog(f,"The password is not the same as the confirmation password");
                     }
-                    if(_user.getText().length()==0||p.length()==0||pc.length()==0){
-                        JOptionPane.showMessageDialog(f,"User or Password invalid or existed!");
-                    }
-                    else{
-                        try {
-                            OutputStream os = socket.getOutputStream();
-                            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
-                            bw.write("SignUp"+"\t"+_user.getText()+"\t"+new String(_pass.getPassword()));
-                            bw.newLine();
-                            bw.flush();
-                            InputStream is = socket.getInputStream();
-                            BufferedReader br = new BufferedReader(new InputStreamReader(is));
-                            String recv=br.readLine();
-                            if(recv.equals("OKS")){
-                                JOptionPane.showMessageDialog(f,"SignUp Successfully","",JOptionPane.INFORMATION_MESSAGE);
-                                f.dispose();
-                                f=new JFrame();
-                                createLog();
+                    else {
+                        if (_user.getText().length() == 0 || p.length() == 0 || pc.length() == 0) {
+                            JOptionPane.showMessageDialog(f, "User or Password invalid or existed!");
+                        } else {
+                            try {
+                                OutputStream os = socket.getOutputStream();
+                                BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
+                                bw.write("SignUp" + "\t" + _user.getText() + "\t" + new String(_pass.getPassword()));
+                                bw.newLine();
+                                bw.flush();
+                                InputStream is = socket.getInputStream();
+                                BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                                String recv = br.readLine();
+                                if (recv.equals("OKS")) {
+                                    JOptionPane.showMessageDialog(f, "SignUp Successfully", "", JOptionPane.INFORMATION_MESSAGE);
+                                    f.dispose();
+                                    f = new JFrame();
+                                    f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+                                    createLog();
+                                } else {
+                                    JOptionPane.showMessageDialog(f, "User or Password invalid or existed", "", JOptionPane.INFORMATION_MESSAGE);
+                                }
+                            } catch (IOException ex) {
+                                ex.printStackTrace();
                             }
-                            else{
-                                JOptionPane.showMessageDialog(f,"User or Password invalid or existed","",JOptionPane.INFORMATION_MESSAGE);
-                            }
-                        } catch (IOException ex) {
-                            ex.printStackTrace();
                         }
                     }
                 }
@@ -126,6 +129,42 @@ public class Client1 {
         f.pack();
         f.setVisible(true);
 
+    }
+    public static void createMainUI(){
+        f.dispose();
+        f=new JFrame();
+        f.setLayout(new FlowLayout());
+
+        JTextField textField=new JTextField("",15);
+        JButton button=new JButton("Find");
+        button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    OutputStream os = socket.getOutputStream();
+                    BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
+                    bw.write("Chat"+"\t"+textField.getText());
+                    bw.newLine();
+                    bw.flush();
+                    InputStream is = socket.getInputStream();
+                    BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                    String recv = br.readLine();
+                    System.out.println(recv);
+                    if(recv.equals("OKC")){
+
+                    }
+                    else {
+
+                    }
+                }catch (Exception exception){
+                    exception.printStackTrace();
+                }
+            }
+        });
+        f.add(textField);
+        f.add(button);
+        f.pack();
+        f.setVisible(true);
     }
     public static void createLog(){
         JPanel panel=new JPanel();
@@ -187,7 +226,7 @@ public class Client1 {
                             BufferedReader br=new BufferedReader(new InputStreamReader(is));
                             String recv=br.readLine();
                             if(recv.equals("OKL")){
-
+                                createMainUI();
                             }
                             else{
                                 JOptionPane.showMessageDialog(f,"User or password not right","",JOptionPane.INFORMATION_MESSAGE);
@@ -220,6 +259,12 @@ public class Client1 {
         socket=new Socket("localhost",3200);
         JFrame.setDefaultLookAndFeelDecorated(true);
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        f.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosed(WindowEvent e) {
+                super.windowClosed(e);
+            }
+        });
         createLog();
     }catch (Exception exception){
         exception.printStackTrace();

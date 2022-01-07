@@ -8,10 +8,14 @@ import java.util.Vector;
 class Infor{
     private String user;
     private String pass;
+    private Socket socket;
     Infor(String user, String pass){
         this.user=user;
         this.pass=pass;
+        this.socket=null;
     }
+    public void setSocket(Socket socket){this.socket=socket;}
+    public Socket getSocket(){ return socket;}
     public String getUser() {
         return user;
     }
@@ -24,15 +28,16 @@ class Infor{
 }
 class SThread extends Thread{
     private Socket socket;
-    private static Vector<Infor> infors;
+    private static Vector<Infor> infors=new Vector<>();
     public SThread(Socket s, Vector<Infor> infors){
         socket=s;
-        this.infors=infors;
+        SThread.infors =infors;
     }
-    public static boolean CheckAccount4Login(String a, String p){
+    public boolean CheckAccount4Login(String a, String p){
         for (int i = 0; i < infors.size(); i++) {
             if(infors.elementAt(i).getUser().equals(a)){
                 if(infors.elementAt(i).getPass().equals(p)){
+                    infors.elementAt(i).setSocket(socket);
                     return true;
                 }
                 return false;
@@ -40,14 +45,52 @@ class SThread extends Thread{
         }
         return false;
     }
-    public static boolean CheckAccount4SignUp(String a, String p){
+    public boolean CheckAccount4SignUp(String a, String p){
         for (int i = 0; i < infors.size(); i++) {
             if(infors.elementAt(i).getUser().equals(a)){
                 return false;
             }
         }
         infors.add(new Infor(a,p));
+        try{
+            FileOutputStream fos = new FileOutputStream("data.txt", true);
+            DataOutputStream d = new DataOutputStream(fos);
+            d.writeBytes("\n" + a + " . . . " + p);
+        }catch (Exception exception){
+            exception.printStackTrace();
+        }
         return true;
+    }
+    public void ConnectToChat(){
+        try {
+            do {
+                InputStream is = socket.getInputStream();
+                BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                String recv = br.readLine();
+                System.out.println(recv);
+                String[] t=recv.split("\t");
+                if(t[0].equals("Chat")){
+                    OutputStream os = socket.getOutputStream();
+                    BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
+                    boolean key=false;
+                    for (int i=0;i<infors.size();i++){
+                        if(infors.elementAt(i).getUser().equals(t[1]) && infors.elementAt(i).getSocket()!=null){
+                            bw.write("OKC");
+                            bw.newLine();
+                            bw.flush();
+                            key=true;
+                        }
+                    }
+                    if(!key) {
+                        bw.write("NOC");
+                        bw.newLine();
+                        bw.flush();
+                    }
+                }
+            } while (true);
+        }catch (Exception exception){
+            exception.printStackTrace();
+        }
     }
     public void run(){
         try {
@@ -59,10 +102,11 @@ class SThread extends Thread{
                 OutputStream os = socket.getOutputStream();
                 BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
                 if(t[0].equals("Login")) {
-                    if (CheckAccount4Login(t[0], t[1])) {
+                    if (CheckAccount4Login(t[1], t[2])) {
                         bw.write("OKL");
                         bw.newLine();
                         bw.flush();
+                        ConnectToChat();
                     } else {
                         bw.write("NOL");
                         bw.newLine();
@@ -70,7 +114,8 @@ class SThread extends Thread{
                     }
                 }
                 else if(t[0].equals("SignUp")){
-                    if(!CheckAccount4SignUp(t[0],t[1])){
+                    if(CheckAccount4SignUp(t[1], t[2])){
+
                         bw.write("OKS");
                         bw.newLine();
                         bw.flush();
@@ -113,7 +158,6 @@ public class Server {
             exception.printStackTrace();
         }
     }
-
     public static void main(String[] args) {
         try{
             ServerSocket serverSocket=new ServerSocket(3200);
@@ -121,7 +165,7 @@ public class Server {
             do{
                 Socket socket=serverSocket.accept();
                 SThread t=new SThread(socket,infors);
-                sThreads.add(t);
+                //sThreads.add(t);
                 t.start();
             }
             while (true);
