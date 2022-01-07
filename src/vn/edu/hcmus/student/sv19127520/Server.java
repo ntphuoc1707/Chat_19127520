@@ -63,6 +63,23 @@ class SThread extends Thread{
     }
     public void ConnectToChat(){
         try {
+            OutputStream os = socket.getOutputStream();
+            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
+            String p="List"+"\t";
+            for (int i=0;i<infors.size();i++) {
+                if (infors.elementAt(i).getSocket() != null) {
+                    p += infors.elementAt(i).getUser() + "\t";
+                }
+            }
+            for (int i=0;i<infors.size();i++)
+                if (infors.elementAt(i).getSocket()!=null){
+                    OutputStream outputStream=infors.elementAt(i).getSocket().getOutputStream();
+                    BufferedWriter bufferedWriter=new BufferedWriter(new OutputStreamWriter(outputStream));
+                    bufferedWriter.write(p);
+                    bufferedWriter.newLine();
+                    bufferedWriter.flush();
+                }
+
             do {
                 InputStream is = socket.getInputStream();
                 BufferedReader br = new BufferedReader(new InputStreamReader(is));
@@ -70,8 +87,6 @@ class SThread extends Thread{
                 System.out.println(recv);
                 String[] t=recv.split("\t");
                 if(t[0].equals("Chat")){
-                    OutputStream os = socket.getOutputStream();
-                    BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
                     boolean key=false;
                     for (int i=0;i<infors.size();i++){
                         if(infors.elementAt(i).getUser().equals(t[1]) && infors.elementAt(i).getSocket()!=null){
@@ -86,6 +101,9 @@ class SThread extends Thread{
                         bw.newLine();
                         bw.flush();
                     }
+                }
+                else if(recv.equals("EXIT. . . EXIt...")){
+                    return;
                 }
             } while (true);
         }catch (Exception exception){
@@ -107,6 +125,22 @@ class SThread extends Thread{
                         bw.newLine();
                         bw.flush();
                         ConnectToChat();
+                        String p="List"+"\t";
+                        for (int i=0;i<infors.size();i++) {
+                            if (infors.elementAt(i).getSocket() != null && infors.elementAt(i).getSocket()!=socket) {
+                                p += infors.elementAt(i).getUser() + "\t";
+                            }
+                        }
+                        for (int i=0;i<infors.size();i++)
+                            if (infors.elementAt(i).getSocket()!=null&& infors.elementAt(i).getSocket()!=socket){
+                                OutputStream outputStream=infors.elementAt(i).getSocket().getOutputStream();
+                                BufferedWriter bufferedWriter=new BufferedWriter(new OutputStreamWriter(outputStream));
+                                bufferedWriter.write(p);
+                                bufferedWriter.newLine();
+                                bufferedWriter.flush();
+                            }
+                        socket=null;
+                        return;
                     } else {
                         bw.write("NOL");
                         bw.newLine();

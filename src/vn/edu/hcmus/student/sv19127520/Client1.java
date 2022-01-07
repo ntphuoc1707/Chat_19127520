@@ -8,6 +8,7 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;
 import java.net.Socket;
+import java.util.Vector;
 
 /**
  * vn.edu.hcmus.student.sv19127520;
@@ -15,22 +16,44 @@ import java.net.Socket;
  * Date 06/01/2022 - 09:06 CH
  * Description: ...
  */
-
-public class Client1 {
-    public static JFrame f=new JFrame();
-    public static Socket socket;
-    public static void Send(Socket s, String content){
+class CThread1 extends Thread{
+    //public Vector<JFrame> frames=new Vector<>();
+    public Socket socket;
+    public JPanel panel=new JPanel();
+    public JFrame frame=new JFrame();
+    CThread1(JFrame frame,JPanel panel, Socket socket){
+        this.frame=frame;
+        this.panel=panel;
+        this.socket=socket;
+    }
+    public void run(){
         try {
-            OutputStream os = s.getOutputStream();
-            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
-            bw.write(content);
-            bw.flush();
-            bw.close();
+            do {
+                InputStream is = socket.getInputStream();
+                BufferedReader br = new BufferedReader(new InputStreamReader(is));
+                String recv = br.readLine();
+                System.out.println(recv);
+                String[] t=recv.split("\t");
+                if(t[0].equals("List")){
+                    panel.removeAll();
+                    panel.repaint();
+                    for (int i=1;i<t.length;i++) {
+                        JLabel label = new JLabel(t[i]);
+                        panel.add(label);
+                    }
+                }
+                frame.pack();
+            } while (true);
         }
         catch (Exception exception){
             exception.printStackTrace();
         }
     }
+}
+public class Client1 {
+    public static JFrame f=new JFrame();
+    public static Socket socket;
+    public static Vector<JFrame> frames=new Vector<>();
     public static void createReg(){
         f.dispose();
 //        JFrame.setDefaultLookAndFeelDecorated(true);
@@ -131,10 +154,40 @@ public class Client1 {
 
     }
     public static void createMainUI(){
-        f.dispose();
-        f=new JFrame();
+        f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         f.setLayout(new FlowLayout());
-
+        f.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                try{
+                    OutputStream os = socket.getOutputStream();
+                    BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
+                    bw.write("EXIT. . . EXIt...");
+                    bw.newLine();
+                    bw.flush();
+                }catch (Exception exception){
+                    exception.printStackTrace();
+                }
+            }
+        });
+        JPanel panel=new JPanel();
+        panel.setLayout(new BoxLayout(panel,BoxLayout.Y_AXIS));
+//        try{
+//            do{
+//                InputStream is = socket.getInputStream();
+//                BufferedReader br = new BufferedReader(new InputStreamReader(is));
+//                String recv = br.readLine();
+//                String[] t=recv.split("\t");
+//                if(t[0].equals("List")){
+//                    for (String x:t) {
+//                        JLabel label = new JLabel(x);
+//                        f.add(label);
+//                    }
+//                }
+//            }while (true);
+//        }catch (Exception exception){
+//            exception.printStackTrace();
+//        }
         JTextField textField=new JTextField("",15);
         JButton button=new JButton("Find");
         button.addActionListener(new ActionListener() {
@@ -149,20 +202,22 @@ public class Client1 {
                     InputStream is = socket.getInputStream();
                     BufferedReader br = new BufferedReader(new InputStreamReader(is));
                     String recv = br.readLine();
-                    System.out.println(recv);
                     if(recv.equals("OKC")){
 
                     }
                     else {
-
+                        JOptionPane.showMessageDialog(f, "User offline or not exist!");
                     }
                 }catch (Exception exception){
                     exception.printStackTrace();
                 }
             }
         });
-        f.add(textField);
-        f.add(button);
+        //f.add(textField);
+        f.add(panel);
+        CThread1 cThread1=new CThread1(f,panel,socket);
+        cThread1.start();
+        //f.add(button);
         f.pack();
         f.setVisible(true);
     }
@@ -226,6 +281,8 @@ public class Client1 {
                             BufferedReader br=new BufferedReader(new InputStreamReader(is));
                             String recv=br.readLine();
                             if(recv.equals("OKL")){
+                                f.dispose();
+                                f=new JFrame(_user.getText());
                                 createMainUI();
                             }
                             else{
