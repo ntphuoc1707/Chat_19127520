@@ -4,7 +4,10 @@ package vn.edu.hcmus.student.sv19127520;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.Vector;
+
 class Infor{
     private String user;
     private String pass;
@@ -29,6 +32,7 @@ class Infor{
 class SThread extends Thread{
     private Socket socket;
     private static Vector<Infor> infors=new Vector<>();
+    private Set<String> user_chatting=new HashSet<>();
     public SThread(Socket s, Vector<Infor> infors){
         socket=s;
         SThread.infors =infors;
@@ -63,12 +67,14 @@ class SThread extends Thread{
     }
     public void ConnectToChat(){
         try {
-            OutputStream os = socket.getOutputStream();
-            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
             String p="List"+"\t";
             for (int i=0;i<infors.size();i++) {
                 if (infors.elementAt(i).getSocket() != null) {
+                    user_chatting.add(infors.elementAt(i).getUser());
                     p += infors.elementAt(i).getUser() + "\t";
+                }
+                else{
+                    user_chatting.remove(infors.elementAt(i).getUser());
                 }
             }
             for (int i=0;i<infors.size();i++)
@@ -96,8 +102,29 @@ class SThread extends Thread{
                             bufferedWriter.flush();
                         }
                 }
-                else if(recv.equals("EXiT. . . EXIt...")){
-                    return;
+                else if (t[0].equals("EXIT")) {
+                    if(user_chatting.contains(t[1])){
+                        for(int i=0;i<infors.size();i++)
+                            if(!infors.elementAt(i).getUser().equals(t[1])&& infors.elementAt(i).getSocket()!=null){
+                                OutputStream outputStream=infors.elementAt(i).getSocket().getOutputStream();
+                                BufferedWriter bufferedWriter=new BufferedWriter(new OutputStreamWriter(outputStream));
+                                bufferedWriter.write("Exit"+"\t"+t[1]);
+                                bufferedWriter.newLine();
+                                bufferedWriter.flush();
+                            }
+                        }
+                        return;
+                }
+                else {
+                    for(int i=0;i<infors.size();i++)
+                        if(infors.elementAt(i).getUser().equals(t[2])&& infors.elementAt(i).getSocket()!=null){
+                            OutputStream outputStream=infors.elementAt(i).getSocket().getOutputStream();
+                            BufferedWriter bufferedWriter=new BufferedWriter(new OutputStreamWriter(outputStream));
+                            bufferedWriter.write(t[0]+"\t"+t[1]+"\t"+t[3]);
+                            bufferedWriter.newLine();
+                            bufferedWriter.flush();
+                        }
+
                 }
             } while (true);
         }catch (Exception exception){

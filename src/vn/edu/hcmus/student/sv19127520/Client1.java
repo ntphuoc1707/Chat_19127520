@@ -4,14 +4,15 @@ import javax.swing.*;
 import javax.swing.border.AbstractBorder;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.WindowAdapter;
-import java.awt.event.WindowEvent;
+import java.awt.event.*;
+import java.awt.font.TextAttribute;
 import java.awt.geom.Rectangle2D;
 import java.awt.geom.RoundRectangle2D;
 import java.io.*;
 import java.net.Socket;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.Map;
 import java.util.Vector;
 
 /**
@@ -43,6 +44,40 @@ class CThread1 extends Thread{
         JPanel content=new JPanel();
         content.setLayout(new FlowLayout());
         JTextField textField=new JTextField("",15);
+        textField.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if(e.getKeyCode()==KeyEvent.VK_ENTER){
+                    try {
+                        if(textField.getText().length()>0) {
+                            OutputStream os = socket.getOutputStream();
+                            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
+                            bw.write("Msg"+"\t" + " to " + "\t"+user + "\t" + " to " + "\t" + k + "\t" + " to " + "\t" + textField.getText());
+                            bw.newLine();
+                            bw.flush();
+
+                            JPanel panel=new JPanel();
+                            panel.setLayout(new BorderLayout());
+                            JPanel panel1=new JPanel();
+                            JLabel label=new JLabel(textField.getText());
+                            label.setForeground(Color.white);
+                            panel1.setBackground(Color.getHSBColor(0.625f,0.518f,0.863f));;
+                            panel1.add(label);
+                            panel.add(panel1, BorderLayout.EAST);
+                            label.setAlignmentX(Component.LEFT_ALIGNMENT);
+
+                            chat.add(panel);
+                            chat.add(Box.createRigidArea(new Dimension(0,5)));
+
+                            textField.setText("");
+                            f.pack();
+                        }
+                    }catch (Exception exception){
+                        exception.printStackTrace();
+                    }
+                }
+            }
+        });
         JButton button=new JButton("Send");
 
         JButton button1=new JButton("File");
@@ -57,18 +92,26 @@ class CThread1 extends Thread{
                 if(value==JFileChooser.APPROVE_OPTION){
                     File file=fc.getSelectedFile();
                     try{
-                        OutputStream os = socket.getOutputStream();
                         JPanel panel=new JPanel();
                         panel.setLayout(new BorderLayout());
-                        JPanel panel1=new JPanel();
                         JLabel label=new JLabel(file.getName());
                         label.setForeground(Color.white);
-                        panel1.setBackground(Color.getHSBColor(0.625f,0.518f,0.863f));;
-                        panel1.add(label);
-                        panel.add(panel1, BorderLayout.EAST);
-
+                        label.setAlignmentX(Component.RIGHT_ALIGNMENT);
+                        label.setOpaque(true);
+                        label.setBackground(Color.getHSBColor(0.625f,0.518f,0.863f));
+                        Font font = label.getFont();
+                        Map attributes = font.getAttributes();
+                        attributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+                        label.setFont(font.deriveFont(attributes));
+                        panel.add(label, BorderLayout.EAST);
                         chat.add(panel);
                         chat.add(Box.createRigidArea(new Dimension(0,5)));
+                        OutputStream os = socket.getOutputStream();
+                        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
+                        String string=file.getName()+"\t" + " to " + "\t"+user + "\t" + " to " + "\t" + k + "\t" + " to " + "\t" + Arrays.toString(Files.readAllBytes(file.toPath()));
+                        bw.write(string);
+                        bw.newLine();
+                        bw.flush();
                         f.pack();
                     }catch (Exception exception){
                         exception.printStackTrace();
@@ -77,7 +120,11 @@ class CThread1 extends Thread{
                 }
             }
         });
-
+        JPanel panel=new JPanel();
+        panel.setLayout(new BorderLayout());
+        panel.add(chat,BorderLayout.CENTER);
+        JScrollPane pane=new JScrollPane(chat);
+        pane.setPreferredSize(new Dimension(500,500));
         f.add(chat, BorderLayout.CENTER);
         f.add(content, BorderLayout.PAGE_END);
         button.addActionListener(new ActionListener() {
@@ -99,6 +146,7 @@ class CThread1 extends Thread{
                         panel1.setBackground(Color.getHSBColor(0.625f,0.518f,0.863f));;
                         panel1.add(label);
                         panel.add(panel1, BorderLayout.EAST);
+                        label.setAlignmentX(Component.LEFT_ALIGNMENT);
 
                         chat.add(panel);
                         chat.add(Box.createRigidArea(new Dimension(0,5)));
@@ -176,17 +224,18 @@ class CThread1 extends Thread{
                     panel.add(pane);
                 }
                 else if(t[0].equals("From")){
+                    JPanel panel=new JPanel();
+                    panel.setLayout(new BorderLayout());
+                    JPanel panel1=new JPanel();
+                    JLabel label=new JLabel(t[2]);
+                    label.setForeground(Color.white);
+                    panel1.add(label);
+                    panel1.setBackground(Color.getHSBColor(0.99f,0.469f,0.812f));
+                    panel.add(panel1,BorderLayout.WEST);
+                    label.setAlignmentX(Component.LEFT_ALIGNMENT);
                     boolean key=false;
                     for(int i=0;i<frames.size();i++)
                         if(frames.elementAt(i).getTitle().equals(t[1])){
-                            JPanel panel=new JPanel();
-                            panel.setLayout(new BorderLayout());
-                            JPanel panel1=new JPanel();
-                            JLabel label=new JLabel(t[2]);
-                            label.setForeground(Color.white);
-                            panel1.add(label);
-                            panel1.setBackground(Color.getHSBColor(0.99f,0.469f,0.812f));;
-                            panel.add(panel1,BorderLayout.WEST);
                             panels.elementAt(i).add(panel);
                             panels.elementAt(i).add(Box.createRigidArea(new Dimension(0,5)));;
                             frames.elementAt(i).pack();
@@ -199,14 +248,78 @@ class CThread1 extends Thread{
                         frame.setVisible(true);
                         for(int i=0;i<frames.size();i++)
                             if(frames.elementAt(i).getTitle().equals(t[1])){
-                                JPanel panel=new JPanel();
-                                panel.setLayout(new BorderLayout());
-                                JPanel panel1=new JPanel();
-                                JLabel label=new JLabel(t[2]);
-                                label.setForeground(Color.white);
-                                panel1.add(label);
-                                panel1.setBackground(Color.getHSBColor(0.99f,0.469f,0.812f));;
-                                panel.add(panel1,BorderLayout.WEST);
+                                panels.elementAt(i).add(panel);
+                                panels.elementAt(i).add(Box.createRigidArea(new Dimension(0,5)));;
+                                frames.elementAt(i).pack();
+                                break;
+                            }
+                    }
+                }
+                else if (t[0].equals("Exit")) {
+                    for(int i=0;i<frames.size();i++){
+                        if(frames.elementAt(i).getTitle().equals(t[1])){
+                            JPanel panel=new JPanel();
+                            panel.setLayout(new BorderLayout());
+                            JLabel label=new JLabel(t[1]+" quit and do not receive your message");
+                            label.setForeground(Color.red);
+                            panels.elementAt(i).add(label);
+                            frames.elementAt(i).pack();
+                        }
+                    }
+                }
+                else{
+                    JPanel panel=new JPanel();
+                    panel.setLayout(new BorderLayout());
+                    JPanel panel1=new JPanel();
+                    panel1.setLayout(new FlowLayout(FlowLayout.LEFT));
+                    JLabel label=new JLabel(t[0]);
+                    label.setForeground(Color.white);
+                    Font font = label.getFont();
+                    Map attributes = font.getAttributes();
+                    attributes.put(TextAttribute.UNDERLINE, TextAttribute.UNDERLINE_ON);
+                    label.setFont(font.deriveFont(attributes));
+                    panel1.add(label);
+                    JButton button=new JButton("Download");
+                    panel1.add(button);
+                    button.addActionListener(new ActionListener() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            try {
+                                FileOutputStream os = new FileOutputStream(t[0]);
+                                String arr=t[2];
+                                arr=arr.substring(1,arr.length()-1);
+                                String[] strings=arr.split(", ");
+                                byte[] p=new byte[strings.length];
+                                for (int i=0;i< p.length;i++){
+                                    p[i]= (byte) Integer.parseInt(strings[i]);
+                                }
+                                os.write(p);
+                                os.close();
+                            }
+                            catch (Exception exception){
+                                exception.printStackTrace();
+                            }
+                        }
+                    });
+
+                    panel1.setBackground(Color.getHSBColor(0.99f,0.469f,0.812f));
+                    panel.add(panel1,BorderLayout.WEST);
+                    label.setAlignmentX(Component.LEFT_ALIGNMENT);
+                    boolean key=false;
+                    for(int i=0;i<frames.size();i++)
+                        if(frames.elementAt(i).getTitle().equals(t[1])){
+                            panels.elementAt(i).add(panel);
+                            panels.elementAt(i).add(Box.createRigidArea(new Dimension(0,5)));;
+                            frames.elementAt(i).pack();
+                            key=true;
+                            break;
+                        }
+                    if(!key){
+                        JFrame frame=createFrame(t[1]);
+                        frame.pack();
+                        frame.setVisible(true);
+                        for(int i=0;i<frames.size();i++)
+                            if(frames.elementAt(i).getTitle().equals(t[1])){
                                 panels.elementAt(i).add(panel);
                                 panels.elementAt(i).add(Box.createRigidArea(new Dimension(0,5)));;
                                 frames.elementAt(i).pack();
@@ -336,7 +449,7 @@ public class Client1 {
                 try{
                     OutputStream os = socket.getOutputStream();
                     BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
-                    bw.write("EXiT. . . EXIt...");
+                    bw.write("EXIT"+"\t"+" to "+"\t"+user_name);
                     bw.newLine();
                     bw.flush();
                 }catch (Exception exception){
@@ -346,52 +459,9 @@ public class Client1 {
         });
         JPanel panel=new JPanel();
         panel.setLayout(new BoxLayout(panel,BoxLayout.Y_AXIS));
-//        try{
-//            do{
-//                InputStream is = socket.getInputStream();
-//                BufferedReader br = new BufferedReader(new InputStreamReader(is));
-//                String recv = br.readLine();
-//                String[] t=recv.split("\t");
-//                if(t[0].equals("List")){
-//                    for (String x:t) {
-//                        JLabel label = new JLabel(x);
-//                        f.add(label);
-//                    }
-//                }
-//            }while (true);
-//        }catch (Exception exception){
-//            exception.printStackTrace();
-//        }
-        JTextField textField=new JTextField("",15);
-        JButton button=new JButton("Find");
-        button.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                try {
-                    OutputStream os = socket.getOutputStream();
-                    BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
-                    bw.write("Chat"+"\t"+textField.getText());
-                    bw.newLine();
-                    bw.flush();
-                    InputStream is = socket.getInputStream();
-                    BufferedReader br = new BufferedReader(new InputStreamReader(is));
-                    String recv = br.readLine();
-                    if(recv.equals("OKC")){
-
-                    }
-                    else {
-                        JOptionPane.showMessageDialog(f, "User offline or not exist!");
-                    }
-                }catch (Exception exception){
-                    exception.printStackTrace();
-                }
-            }
-        });
-        //f.add(textField);
         f.add(panel);
         CThread1 cThread1=new CThread1(f,panel,socket,user_name);
         cThread1.start();
-        //f.add(button);
         f.pack();
         f.setVisible(true);
     }
@@ -456,7 +526,7 @@ public class Client1 {
                             String recv=br.readLine();
                             if(recv.equals("OKL")){
                                 f.dispose();
-                                f=new JFrame(_user.getText());
+                                f=new JFrame("Welcome "+_user.getText());
                                 user_name=_user.getText();
                                 createMainUI();
                             }
@@ -491,12 +561,6 @@ public class Client1 {
         socket=new Socket("localhost",3200);
         JFrame.setDefaultLookAndFeelDecorated(true);
         f.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        f.addWindowListener(new WindowAdapter() {
-            @Override
-            public void windowClosed(WindowEvent e) {
-                super.windowClosed(e);
-            }
-        });
         createLog();
     }catch (Exception exception){
         exception.printStackTrace();
