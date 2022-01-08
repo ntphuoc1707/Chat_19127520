@@ -1,11 +1,15 @@
 package vn.edu.hcmus.student.sv19127520;
 
 import javax.swing.*;
+import javax.swing.border.AbstractBorder;
+import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.awt.geom.Rectangle2D;
+import java.awt.geom.RoundRectangle2D;
 import java.io.*;
 import java.net.Socket;
 import java.util.Vector;
@@ -18,6 +22,7 @@ import java.util.Vector;
  */
 class CThread1 extends Thread{
     public static Vector<JFrame> frames=new Vector<>();
+    public static Vector<JPanel> panels=new Vector<>();
     public Socket socket;
     public JPanel panel;
     public JFrame frame;
@@ -27,6 +32,101 @@ class CThread1 extends Thread{
         this.frame=frame;
         this.panel=panel;
         this.socket=socket;
+    }
+    public JFrame createFrame(String k){
+        JFrame f=new JFrame(k);
+        f.setLayout(new BorderLayout());
+
+        JPanel chat=new JPanel();
+        chat.setLayout(new BoxLayout(chat,BoxLayout.PAGE_AXIS));
+
+        JPanel content=new JPanel();
+        content.setLayout(new FlowLayout());
+        JTextField textField=new JTextField("",15);
+        JButton button=new JButton("Send");
+
+        JButton button1=new JButton("File");
+        content.add(textField);
+        content.add(button1);
+        content.add(button);
+        button1.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                JFileChooser fc=new JFileChooser();
+                int value = fc.showDialog(f, "Send");
+                if(value==JFileChooser.APPROVE_OPTION){
+                    File file=fc.getSelectedFile();
+                    try{
+                        OutputStream os = socket.getOutputStream();
+                        JPanel panel=new JPanel();
+                        panel.setLayout(new BorderLayout());
+                        JPanel panel1=new JPanel();
+                        JLabel label=new JLabel(file.getName());
+                        label.setForeground(Color.white);
+                        panel1.setBackground(Color.getHSBColor(0.625f,0.518f,0.863f));;
+                        panel1.add(label);
+                        panel.add(panel1, BorderLayout.EAST);
+
+                        chat.add(panel);
+                        chat.add(Box.createRigidArea(new Dimension(0,5)));
+                        f.pack();
+                    }catch (Exception exception){
+                        exception.printStackTrace();
+                    }
+
+                }
+            }
+        });
+
+        f.add(chat, BorderLayout.CENTER);
+        f.add(content, BorderLayout.PAGE_END);
+        button.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                try {
+                    if(textField.getText().length()>0) {
+                        OutputStream os = socket.getOutputStream();
+                        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
+                        bw.write("Msg"+"\t" + " to " + "\t"+user + "\t" + " to " + "\t" + k + "\t" + " to " + "\t" + textField.getText());
+                        bw.newLine();
+                        bw.flush();
+
+                        JPanel panel=new JPanel();
+                        panel.setLayout(new BorderLayout());
+                        JPanel panel1=new JPanel();
+                        JLabel label=new JLabel(textField.getText());
+                        label.setForeground(Color.white);
+                        panel1.setBackground(Color.getHSBColor(0.625f,0.518f,0.863f));;
+                        panel1.add(label);
+                        panel.add(panel1, BorderLayout.EAST);
+
+                        chat.add(panel);
+                        chat.add(Box.createRigidArea(new Dimension(0,5)));
+
+                        textField.setText("");
+                        f.pack();
+                    }
+                }catch (Exception exception){
+                    exception.printStackTrace();
+                }
+            }
+        });
+
+        f.addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                for(int i=0;i<frames.size();i++){
+                    if(frames.elementAt(i).getTitle().equals(k)) {
+                        frames.remove(i);
+                        panels.remove(i);
+                        return;
+                    }
+                }
+            }
+        });
+        panels.add(chat);
+        frames.add(f);
+        return f;
     }
     public void run(){
         try {
@@ -60,18 +160,7 @@ class CThread1 extends Thread{
                                         if(x.getTitle().equals(t[finalI]))
                                             return;
                                     }
-                                    f.addWindowListener(new WindowAdapter() {
-                                        @Override
-                                        public void windowClosing(WindowEvent e) {
-                                            for(JFrame x: frames){
-                                                if(x.getTitle().equals(t[finalI])) {
-                                                    frames.remove(x);
-                                                    return;
-                                                }
-                                            }
-                                        }
-                                    });
-                                    frames.add(f);
+                                    f=createFrame(t[finalI]);
                                     f.pack();
                                     f.setVisible(true);
                                 }
@@ -85,6 +174,45 @@ class CThread1 extends Thread{
                     JScrollPane pane=new JScrollPane(pn);
                     pane.setMaximumSize(new Dimension(700,700));
                     panel.add(pane);
+                }
+                else if(t[0].equals("From")){
+                    boolean key=false;
+                    for(int i=0;i<frames.size();i++)
+                        if(frames.elementAt(i).getTitle().equals(t[1])){
+                            JPanel panel=new JPanel();
+                            panel.setLayout(new BorderLayout());
+                            JPanel panel1=new JPanel();
+                            JLabel label=new JLabel(t[2]);
+                            label.setForeground(Color.white);
+                            panel1.add(label);
+                            panel1.setBackground(Color.getHSBColor(0.99f,0.469f,0.812f));;
+                            panel.add(panel1,BorderLayout.WEST);
+                            panels.elementAt(i).add(panel);
+                            panels.elementAt(i).add(Box.createRigidArea(new Dimension(0,5)));;
+                            frames.elementAt(i).pack();
+                            key=true;
+                            break;
+                        }
+                    if(!key){
+                        JFrame frame=createFrame(t[1]);
+                        frame.pack();
+                        frame.setVisible(true);
+                        for(int i=0;i<frames.size();i++)
+                            if(frames.elementAt(i).getTitle().equals(t[1])){
+                                JPanel panel=new JPanel();
+                                panel.setLayout(new BorderLayout());
+                                JPanel panel1=new JPanel();
+                                JLabel label=new JLabel(t[2]);
+                                label.setForeground(Color.white);
+                                panel1.add(label);
+                                panel1.setBackground(Color.getHSBColor(0.99f,0.469f,0.812f));;
+                                panel.add(panel1,BorderLayout.WEST);
+                                panels.elementAt(i).add(panel);
+                                panels.elementAt(i).add(Box.createRigidArea(new Dimension(0,5)));;
+                                frames.elementAt(i).pack();
+                                break;
+                            }
+                    }
                 }
                 frame.pack();
             } while (true);

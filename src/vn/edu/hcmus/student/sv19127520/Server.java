@@ -85,22 +85,16 @@ class SThread extends Thread{
                 BufferedReader br = new BufferedReader(new InputStreamReader(is));
                 String recv = br.readLine();
                 System.out.println(recv);
-                String[] t=recv.split("\t");
-                if(t[0].equals("Chat")){
-                    boolean key=false;
-                    for (int i=0;i<infors.size();i++){
-                        if(infors.elementAt(i).getUser().equals(t[1]) && infors.elementAt(i).getSocket()!=null){
-                            bw.write("OKC");
-                            bw.newLine();
-                            bw.flush();
-                            key=true;
+                String[] t=recv.split("\t"+" to "+"\t");
+                if(t[0].equals("Msg")){
+                    for(int i=0;i<infors.size();i++)
+                        if(infors.elementAt(i).getUser().equals(t[2])&& infors.elementAt(i).getSocket()!=null){
+                            OutputStream outputStream=infors.elementAt(i).getSocket().getOutputStream();
+                            BufferedWriter bufferedWriter=new BufferedWriter(new OutputStreamWriter(outputStream));
+                            bufferedWriter.write("From"+"\t"+t[1]+"\t"+t[3]);
+                            bufferedWriter.newLine();
+                            bufferedWriter.flush();
                         }
-                    }
-                    if(!key) {
-                        bw.write("NOC");
-                        bw.newLine();
-                        bw.flush();
-                    }
                 }
                 else if(recv.equals("EXiT. . . EXIt...")){
                     return;
