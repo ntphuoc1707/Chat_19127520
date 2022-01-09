@@ -1,5 +1,4 @@
-package vn.edu.hcmus.student.sv19127520;
-
+package vn.edu.hcmus.student.sv19127520.Server;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -72,6 +71,9 @@ class SThread extends Thread{
                 if (infors.elementAt(i).getSocket() != null) {
                     user_chatting.add(infors.elementAt(i).getUser());
                     p += infors.elementAt(i).getUser() + "\t";
+                    System.out.println(infors.elementAt(i).getSocket());
+                    System.out.println(infors.elementAt(i).getUser());
+                    System.out.println();
                 }
                 else{
                     user_chatting.remove(infors.elementAt(i).getUser());
@@ -138,6 +140,7 @@ class SThread extends Thread{
                 BufferedReader br = new BufferedReader(new InputStreamReader(is));
                 String recv = br.readLine();
                 String[] t = recv.split("\t");
+                System.out.println(recv);
                 OutputStream os = socket.getOutputStream();
                 BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
                 if(t[0].equals("Login")) {
@@ -190,8 +193,6 @@ class SThread extends Thread{
     }
 }
 public class Server {
-    public static Vector<SThread> sThreads=new Vector<>();
-    public static Vector<String> user=new Vector<>();
     public static Vector<Infor> infors=new Vector<>();
     public static void LoadData(){
         String infor="";

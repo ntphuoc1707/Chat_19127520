@@ -1,13 +1,9 @@
-package vn.edu.hcmus.student.sv19127520;
+package vn.edu.hcmus.student.sv19127520.Client;
 
 import javax.swing.*;
-import javax.swing.border.AbstractBorder;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.TextAttribute;
-import java.awt.geom.Rectangle2D;
-import java.awt.geom.RoundRectangle2D;
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -15,12 +11,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Vector;
 
-/**
- * vn.edu.hcmus.student.sv19127520;
- * Created by Phuoc -19127520
- * Date 06/01/2022 - 09:06 CH
- * Description: ...
- */
 class CThread1 extends Thread{
     public static Vector<JFrame> frames=new Vector<>();
     public static Vector<JPanel> panels=new Vector<>();
@@ -497,8 +487,6 @@ public class Client1 {
 
         JPanel p=new JPanel();
         p.setLayout(new BoxLayout(p,BoxLayout.Y_AXIS));
-        // CThread thread = new CThread(p,socket, f);
-        //thread.start();
 
         JPanel signUp=new JPanel();
         signUp.setLayout(new FlowLayout());
@@ -507,43 +495,40 @@ public class Client1 {
         signUp.add(sign);
         panel2.add(signUp);
 
-        ActionListener y=new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String s=e.getActionCommand();
-                try {
-                    if (s.equals("Login")) {
-                        if (_user.getText().length() == 0 || new String(_pass.getPassword()).length() == 0) {
-                            JOptionPane.showMessageDialog(f, "User or Password invalid!");
-                        } else {
-                            OutputStream os = socket.getOutputStream();
-                            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
-                            bw.write("Login"+"\t"+_user.getText()+"\t"+new String(_pass.getPassword()));
-                            bw.newLine();
-                            bw.flush();
-                            InputStream is=socket.getInputStream();
-                            BufferedReader br=new BufferedReader(new InputStreamReader(is));
-                            String recv=br.readLine();
-                            if(recv.equals("OKL")){
-                                f.dispose();
-                                f=new JFrame("Welcome "+_user.getText());
-                                user_name=_user.getText();
-                                createMainUI();
-                            }
-                            else{
-                                JOptionPane.showMessageDialog(f,"User or password not right","",JOptionPane.INFORMATION_MESSAGE);
-                            }
+        ActionListener y= e -> {
+            String s=e.getActionCommand();
+            try {
+                if (s.equals("Login")) {
+                    if (_user.getText().length() == 0 || new String(_pass.getPassword()).length() == 0) {
+                        JOptionPane.showMessageDialog(f, "User or Password invalid!");
+                    } else {
+                        OutputStream os = socket.getOutputStream();
+                        BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(os));
+                        bw.write("Login"+"\t"+_user.getText()+"\t"+new String(_pass.getPassword()));
+                        bw.newLine();
+                        bw.flush();
+                        InputStream is=socket.getInputStream();
+                        BufferedReader br=new BufferedReader(new InputStreamReader(is));
+                        String recv=br.readLine();
+                        if(recv.equals("OKL")){
+                            f.dispose();
+                            f=new JFrame("Welcome "+_user.getText());
+                            user_name=_user.getText();
+                            createMainUI();
+                        }
+                        else{
+                            JOptionPane.showMessageDialog(f,"User or password not right","",JOptionPane.INFORMATION_MESSAGE);
                         }
                     }
-                    else if(s.equals("Sign Up")){
-                        f.dispose();
-                        f=new JFrame();
-                        createReg();
-                    }
                 }
-                catch (Exception exception){
-                    exception.printStackTrace();
+                else if(s.equals("Sign Up")){
+                    f.dispose();
+                    f=new JFrame();
+                    createReg();
                 }
+            }
+            catch (Exception exception){
+                exception.printStackTrace();
             }
         };
         login.addActionListener(y);

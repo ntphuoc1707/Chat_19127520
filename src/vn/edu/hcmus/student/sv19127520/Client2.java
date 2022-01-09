@@ -1,13 +1,9 @@
 package vn.edu.hcmus.student.sv19127520;
 
 import javax.swing.*;
-import javax.swing.border.AbstractBorder;
-import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.font.TextAttribute;
-import java.awt.geom.Rectangle2D;
-import java.awt.geom.RoundRectangle2D;
 import java.io.*;
 import java.net.Socket;
 import java.nio.file.Files;
@@ -15,12 +11,6 @@ import java.util.Arrays;
 import java.util.Map;
 import java.util.Vector;
 
-/**
- * vn.edu.hcmus.student.sv19127520;
- * Created by Phuoc -19127520
- * Date 06/01/2022 - 09:06 CH
- * Description: ...
- */
 class CThread2 extends Thread{
     public static Vector<JFrame> frames=new Vector<>();
     public static Vector<JPanel> panels=new Vector<>();
